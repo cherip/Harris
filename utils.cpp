@@ -142,5 +142,7 @@ float box_integral(IplImage *img, int row, int col, int rows, int cols)
 }
 
 void drawPoint(IplImage *src, int w, int h) {
-    cvCircle(src, cvPoint(w, h), 10, cvScalar(0, 255, 0), 1);
+//    cvCircle(src, cvPoint(w, h), 10, cvScalar(0, 255, 0), 1);
+    cvLine(src, cvPoint(w - 5, h), cvPoint(w + 5, h), cvScalar(0, 0, 255), 1);
+    cvLine(src, cvPoint(w, h - 5), cvPoint(w, h + 5), cvScalar(0, 0, 255), 1);
 }
