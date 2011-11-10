@@ -17,4 +17,6 @@ float box_integral(IplImage *img, int row, int col, int rows, int cols);
 IplImage *integral(IplImage *source);
 float pixval32f(IplImage *img, int w, int h);
 void drawPoint(IplImage *src, int w, int h);
+void show_image(IplImage *src, const char *name);
+IplImage* stack_imgs( IplImage* img1, IplImage* img2 );
 #endif

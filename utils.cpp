@@ -146,3 +146,25 @@ void drawPoint(IplImage *src, int w, int h) {
     cvLine(src, cvPoint(w - 5, h), cvPoint(w + 5, h), cvScalar(0, 0, 255), 1);
     cvLine(src, cvPoint(w, h - 5), cvPoint(w, h + 5), cvScalar(0, 0, 255), 1);
 }
+
+void show_image(IplImage *src, const char *name) {
+    cvNamedWindow(name, CV_WINDOW_AUTOSIZE);
+    cvShowImage(name, src);
+    cvWaitKey(0);
+}
+
+IplImage* stack_imgs( IplImage* img1, IplImage* img2 )
+{
+  IplImage* stacked = cvCreateImage( cvSize( img1->width + img2->width,
+					     MAX(img1->height, img2->height) ),
+				     IPL_DEPTH_8U, 3 );
+
+  cvZero( stacked );
+  cvSetImageROI( stacked, cvRect( 0, 0, img1->width, img1->height ) );
+  cvAdd( img1, stacked, stacked, NULL );
+  cvSetImageROI( stacked, cvRect(img1->width, 0, img2->width, img2->height) );
+  cvAdd( img2, stacked, stacked, NULL );
+  cvResetImageROI( stacked );
+
+  return stacked;
+}
