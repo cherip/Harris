@@ -16,7 +16,8 @@ void error(char *p);
 float box_integral(IplImage *img, int row, int col, int rows, int cols); 
 IplImage *integral(IplImage *source);
 float pixval32f(IplImage *img, int w, int h);
+float pixval32f(const IplImage *img, int w, int h);
 void drawPoint(IplImage *src, int w, int h);
 void show_image(IplImage *src, const char *name);
-IplImage* stack_imgs( IplImage* img1, IplImage* img2 );
+IplImage* stack_imgs(const IplImage* img1, const IplImage* img2 );
 #endif

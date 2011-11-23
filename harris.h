@@ -2,9 +2,10 @@
 #define _HARRIS_H_
 
 #include <cv.h>
-IplImage *derivateX(IplImage *img);
-IplImage *derivateY(IplImage *img);
-IplImage *harris(IplImage *, float);
+IplImage *derivateX(const IplImage *img);
+IplImage *derivateY(const IplImage *img);
+IplImage *harris(IplImage *, float, float ***ptsDes, int *npts, int *ndes);
 IplImage *harris_laplace(IplImage *img, float threshold);
+IplImage *cmp_two_image(IplImage *src1, IplImage *src2);
 
 #endif

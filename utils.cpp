@@ -15,6 +15,10 @@ float ABS(float x) {
     return x > 0 ? x : -x;
 }
 
+float pixval32f(const IplImage *img, int w, int h) {
+    return ((float *)(img->imageData + img->widthStep * h))[w];
+}
+
 float pixval32f(IplImage *img, int w, int h) {
     return ((float *)(img->imageData + img->widthStep * h))[w];
 }
@@ -56,7 +60,7 @@ IplImage *get_gray(const IplImage *img) {
         cvCvtColor(img, gray8, CV_BGR2GRAY);
     }
 
-    cvConvertScale(gray8, gray32, 1.0 / 255.0, 0);
+    cvConvertScale(gray8, gray32, 1.0 / 1.0, 0);
     cvReleaseImage(&gray8);
 
     return gray32;
@@ -153,7 +157,7 @@ void show_image(IplImage *src, const char *name) {
     cvWaitKey(0);
 }
 
-IplImage* stack_imgs( IplImage* img1, IplImage* img2 )
+IplImage* stack_imgs(const IplImage* img1, const IplImage* img2 )
 {
   IplImage* stacked = cvCreateImage( cvSize( img1->width + img2->width,
 					     MAX(img1->height, img2->height) ),
