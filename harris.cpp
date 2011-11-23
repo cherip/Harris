@@ -17,6 +17,7 @@ float mat[] = {-1.f, 0, 1.f};
 int filterSize = 5;
 float gauss[5][5];
 float sigma = 2.5;
+//#define PRINT
 
 int cmp(const t_point &a, const t_point &b) {
     return a.val - b.val;
@@ -323,6 +324,9 @@ IplImage *harris_laplace(IplImage *img, float threshold) {
     return printImg;
 }
 
+void print_point(int x, int y, float val) {
+    cout << x << " " << y << " " << val << endl;
+}
 
 int calc_grad_mag_ori(const IplImage *src, int x, int y, float &mag, float &ori) {
     float dx, dy;
@@ -334,7 +338,10 @@ int calc_grad_mag_ori(const IplImage *src, int x, int y, float &mag, float &ori)
 
         mag = sqrt(dx * dx + dy * dy);
         ori = atan2(dy, dx);
-//      cout << dy << " " << dx << endl;
+    
+//      print_point(x, y - 1, pixval32f(src, x, y - 1));
+//      print_point(x, y + 1, pixval32f(src, x, y + 1));
+        cout << dy << " " << dx << " " << ori << endl;
 //      cout << mag << endl;
         return 1;
     }
@@ -353,7 +360,7 @@ float* describe_point(const IplImage *src, t_point *pt, int &size) {
     int _y = pt->y;
     int x, y;
     float _mag, _ori;
-    int bin_num = 8;
+    int bin_num = 4;
     float *_hist = new float[bin_num * 4];
     float *hist = _hist;
     //memset(hist, 0, sizeof(hist));
@@ -370,7 +377,8 @@ float* describe_point(const IplImage *src, t_point *pt, int &size) {
 
         for (int i = -radius; i <= radius; i++) {
             for (int j = -radius; j <= radius; j++) {
-                if (calc_grad_mag_ori(src, x + i, y + i, _mag, _ori)) {
+                //cout << x + i << " " << y + i << endl;
+                if (calc_grad_mag_ori(src, x + i, y + j, _mag, _ori)) {
                     int bin = cvRound(bin_num * (_ori + CV_PI) / (2 * CV_PI)); 
                     bin = bin < bin_num ? bin : 0;
                     int ai = ABS(i);
@@ -382,18 +390,21 @@ float* describe_point(const IplImage *src, t_point *pt, int &size) {
                 }
             } 
         }
+    //    cout << "----\n";
     } 
+    //cout << "****\n";
 
 
-    size = bin_num; 
+    size = bin_num * 4; 
 
     return _hist;
 }
 
-float** describe_feature(const IplImage *src, t_point *pts, int npts, int &featSize) {
+float** describe_feature(const IplImage *src, t_point *pts, int npts, int &ndes) {
     for (int x = 0; x < 5; x++) {
         for (int y = 0; y < 5; y++) {
-            gauss[x][y] = (1.0f / (2.0f * CV_PI * sigma * sigma)) * exp(-(x * x + y * y) / (2 * sigma * sigma));
+            gauss[x][y] = (1.0f / (2.0f * CV_PI * sigma * sigma)) *
+                        exp(-(x * x + y * y) / (2 * sigma * sigma));
 //            cout << gauss[x][y] << endl;
         }
     }
@@ -410,7 +421,7 @@ float** describe_feature(const IplImage *src, t_point *pts, int npts, int &featS
 //      }
     }
 
-    featSize = hist_size;
+    ndes = hist_size;
 
     return des;
 }
@@ -425,6 +436,24 @@ IplImage *cmp_two_image(IplImage *src1, IplImage *src2) {
     IplImage *img2 = harris(src2, 0.01, &des2, &npts2, &ndes, &pts2);
     IplImage *print = stack_imgs(src1, src2);
 
+    /*print des of img1 and img2*/
+#ifdef PRINT
+    for (int i = 0; i < npts1; i++) {
+        for (int j = 0; j < ndes; j++) {
+            cout << des1[i][j] << " ";
+        }
+        cout << endl;
+    }
+    cout << "\n";
+    for (int i = 0; i < npts2; i++) {
+        for (int j = 0; j < ndes; j++) {
+            cout << des2[i][j] << " ";
+        }
+        cout << endl;
+    }
+    cout << "\n";
+#endif
+
     int mark = 0;
     float mdist = 10000;
     for (int i = 0; i < npts1; i++) {
@@ -435,14 +464,15 @@ IplImage *cmp_two_image(IplImage *src1, IplImage *src2) {
             for (int k = 0; k < ndes; k++) {
                 dist += ABS(des1[i][k] - des2[j][k]);
             }
-
-            //cout << dist << endl;
+#ifdef PRINT
+            cout << dist << " " << i << " " << j << endl;
+#endif
             if (dist < mdist) {
                 mdist = dist;
                 mark = j;
             }
         }
-        if (mdist < 3) {
+        if (mdist < 10) {
             cvLine(print, 
                     cvPoint(pts1[i].x, pts1[i].y), 
                     cvPoint(pts2[mark].x + src1->width, pts2[mark].y), 
