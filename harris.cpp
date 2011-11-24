@@ -276,6 +276,74 @@ IplImage *harris(IplImage *img, float threshold, float ***ptsDes, int *npts, int
     return printImg;
 }
 
+IplImage *harris_center(IplImage *img, float threshold) {
+    IplImage *src = get_gray(img);
+    IplImage *deriX = derivateX(src);
+    IplImage *deriY = derivateY(src);
+    IplImage *deriXY = cvCloneImage(src);
+
+    cvMul(deriX, deriY, deriXY);
+    cvMul(deriX, deriX, deriX);
+    cvMul(deriY, deriY, deriY);
+
+    cvSmooth(deriX, deriX, CV_GAUSSIAN, 5);
+    cvSmooth(deriY, deriY, CV_GAUSSIAN, 5);
+    cvSmooth(deriXY, deriXY, CV_GAUSSIAN, 5);
+
+    int w = src->width;
+    int h = src->height;
+
+    int centerX = w / 2;
+    int centerY = h / 2;
+    int ctrSize = w / 3;
+
+    float *cims = new float[(ctrSize + 1) * (ctrSize + 1)];
+    float *vals = new float[(ctrSize + 1) * (ctrSize + 1)];
+    memset(vals, 0, sizeof(vals));
+
+    int sx = centerX - ctrSize / 2;
+    int sy = centerY - ctrSize / 2;
+    float k = 0.06;
+    for (int i = 0; i < ctrSize; i++) {
+        for (int j = 0; j < ctrSize; j++) {
+            int x = sx + j;
+            int y = sy + i;
+
+            float Ix = pixval32f(deriX, x, y);
+            float Iy = pixval32f(deriY, x, y);
+            float Ixy = pixval32f(deriXY, x, y);
+
+            float det = Ix * Iy - Ixy * Ixy;
+            float tr = Ix + Iy;
+            float cim = det - k * tr * tr;
+            
+            cims[i * ctrSize + j] = cim;
+            vals[i * ctrSize + j] = cim;
+        }
+    }
+
+    sort(vals, vals + ctrSize * ctrSize);
+    float thres = vals[ctrSize * ctrSize - 10];
+
+    IplImage *printImg = cvCloneImage(img);
+    for (int i = 0; i < ctrSize; i++) {
+        for (int j = 0; j < ctrSize; j++) {
+            if (cims[i * ctrSize + j] >= thres) {
+                drawPoint(printImg, sx + j, sy + i);    
+            }
+        }
+    }
+
+    show_image(printImg, "center");
+    
+    cvReleaseImage(&src);
+    cvReleaseImage(&deriX);
+    cvReleaseImage(&deriY);
+    cvReleaseImage(&deriXY);
+
+    return printImg;
+}
+
 IplImage *harris_laplace(IplImage *img, float threshold) {
     const int intervals = 17;
 //  float sigma[intervals];
@@ -446,9 +514,13 @@ IplImage *cmp_two_image(IplImage *src1, IplImage *src2) {
     int ndes;
     t_point *pts1, *pts2;
 
-    IplImage *img1 = harris(src1, 0.01, &des1, &npts1, &ndes, &pts1);
-    IplImage *img2 = harris(src2, 0.01, &des2, &npts2, &ndes, &pts2);
+//  IplImage *img1 = harris(src1, 0.01, &des1, &npts1, &ndes, &pts1);
+//  IplImage *img2 = harris(src2, 0.01, &des2, &npts2, &ndes, &pts2);
     IplImage *print = stack_imgs(src1, src2);
+    harris_center(src1, 0.01);
+    harris_center(src2, 0.01);
+
+    return NULL;
 
     /*print des of img1 and img2*/
 #ifdef PRINT
