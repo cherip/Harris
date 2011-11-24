@@ -17,7 +17,7 @@ float mat[] = {-1.f, 0, 1.f};
 int filterSize = 5;
 float gauss[5][5];
 float sigma = 2.5;
-//#define PRINT
+#define PRINT
 
 int cmp(const t_point &a, const t_point &b) {
     return a.val - b.val;
@@ -233,7 +233,10 @@ IplImage *harris(IplImage *img, float threshold, float ***ptsDes, int *npts, int
     for (int y = filterSize; y < h - filterSize; y++) {
         for (int x = filterSize; x < w- filterSize; x++) {
             if (cims[y * w + x] >= thres && is_extremun(cims, x, y, w, h, filterSize)) {
-                drawPoint(printImg, x, y);
+//                drawPoint(printImg, x, y);
+                if (cims[y * w + x] == vals[w * h - 1]) {
+                    drawPoint(printImg, x, y);
+                }
                 pts[count].x = x;
                 pts[count++].y = y;
             }
@@ -341,7 +344,9 @@ int calc_grad_mag_ori(const IplImage *src, int x, int y, float &mag, float &ori)
     
 //      print_point(x, y - 1, pixval32f(src, x, y - 1));
 //      print_point(x, y + 1, pixval32f(src, x, y + 1));
-        cout << dy << " " << dx << " " << ori << endl;
+//      cout << dy << " " << dx << " " << ori << endl;
+//      cout << cvRound(8 * (ori + CV_PI) / (2 * CV_PI)) << endl;
+//      cout << "-------------\n";
 //      cout << mag << endl;
         return 1;
     }
@@ -360,9 +365,10 @@ float* describe_point(const IplImage *src, t_point *pt, int &size) {
     int _y = pt->y;
     int x, y;
     float _mag, _ori;
-    int bin_num = 4;
+    int bin_num = 8;
     float *_hist = new float[bin_num * 4];
     float *hist = _hist;
+    float sum;
     //memset(hist, 0, sizeof(hist));
     for (int i = 0;  i < bin_num * 4; i++) hist[i] = 0;
 
@@ -390,10 +396,18 @@ float* describe_point(const IplImage *src, t_point *pt, int &size) {
                 }
             } 
         }
+
     //    cout << "----\n";
     } 
     //cout << "****\n";
 
+    sum = 0.0;
+    for (int j = 0; j < bin_num * 4; j++) {
+        sum += _hist[j] * _hist[j];
+    }
+    for (int i = 0; i < bin_num * 4; i++) {
+        _hist[i] = _hist[i] / sum;
+    }
 
     size = bin_num * 4; 
 
@@ -472,7 +486,7 @@ IplImage *cmp_two_image(IplImage *src1, IplImage *src2) {
                 mark = j;
             }
         }
-        if (mdist < 10) {
+        if (mdist < 0.02) {
             cvLine(print, 
                     cvPoint(pts1[i].x, pts1[i].y), 
                     cvPoint(pts2[mark].x + src1->width, pts2[mark].y), 
